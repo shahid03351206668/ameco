@@ -10,6 +10,7 @@ def set_accounting_dimensions(self, method=None):
         "Journal Entry": ["accounts"],
         "Material Request": ["items"],
         "Quotation": ["items", "taxes"],
+        "Supplier Quotation": ["items", "taxes"],
     }
 
     tables = child_tables.get(self.doctype)
