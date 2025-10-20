@@ -8,6 +8,7 @@ def set_accounting_dimensions(self, method=None):
         "Payment Entry": ["taxes"],
         "Purchase Receipt": ["items", "taxes"],
         "Journal Entry": ["accounts"],
+        "Request for Quotation": ["items"],
         "Material Request": ["items"],
         "Quotation": ["items", "taxes"],
         "Supplier Quotation": ["items", "taxes"],
