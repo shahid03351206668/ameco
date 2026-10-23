@@ -3,11 +3,7 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.utils import flt
 
-from erpnext.accounts.general_ledger import (
-    delete_gl_entries,
-    make_gl_entries,
-    make_reverse_gl_entries,
-)
+from erpnext.accounts.general_ledger import make_gl_entries, make_reverse_gl_entries
 from erpnext.accounts.party import get_party_account
 from erpnext.accounts.utils import get_fiscal_year
 
@@ -29,7 +25,8 @@ class ExpenseEntry(Document):
     def on_trash(self):
         # cancelled documents already have reversing entries; remove everything
         # that is still linked to this voucher before the document is deleted
-        delete_gl_entries(voucher_type=self.doctype, voucher_no=self.name)
+        for doctype in ("GL Entry", "Payment Ledger Entry"):
+            frappe.db.delete(doctype, {"voucher_type": self.doctype, "voucher_no": self.name})
 
     def set_defaults(self):
         if not self.company:
