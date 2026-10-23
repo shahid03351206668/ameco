@@ -14,6 +14,10 @@ class ExpenseEntry(Document):
         self.validate_accounts()
         self.calculate_totals()
 
+    def before_submit(self):
+        if not self.vendor:
+            frappe.throw(_("Vendor is required to submit an Expense Entry"), title=_("Missing Vendor"))
+
     def on_submit(self):
         self.make_gl_entries()
 

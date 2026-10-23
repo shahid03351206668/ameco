@@ -6,8 +6,8 @@
  "engine": "InnoDB",
  "field_order": [
   "naming_series",
-  "posting_date",
   "company",
+  "posting_date",
   "cost_center",
   "column_break_1",
   "expense_account",
@@ -44,18 +44,18 @@
    "set_only_once": 1
   },
   {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1
+  },
+  {
    "default": "Today",
    "fieldname": "posting_date",
    "fieldtype": "Date",
    "in_list_view": 1,
    "label": "Date",
-   "reqd": 1
-  },
-  {
-   "fieldname": "company",
-   "fieldtype": "Link",
-   "label": "Company",
-   "options": "Company",
    "reqd": 1
   },
   {
