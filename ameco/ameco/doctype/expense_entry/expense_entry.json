@@ -17,8 +17,8 @@
   "amount",
   "tax_inclusive",
   "column_break_2",
-  "tax_account",
   "tax_rate",
+  "tax_account",
   "section_break_totals",
   "net_amount",
   "column_break_3",
@@ -29,7 +29,6 @@
   "place_of_supply",
   "reference_no",
   "column_break_4",
-  "customer",
   "notes",
   "amended_from"
  ],
@@ -103,11 +102,12 @@
    "reqd": 1
   },
   {
-   "default": "Tax Exclusive",
    "fieldname": "tax_inclusive",
    "fieldtype": "Select",
    "label": "Amount Is",
-   "options": "Tax Exclusive\nTax Inclusive"
+   "options": "\nTax Exclusive\nTax Inclusive",
+   "depends_on": "eval:flt(doc.tax_rate)",
+   "mandatory_depends_on": "eval:flt(doc.tax_rate)"
   },
   {
    "fieldname": "column_break_2",
@@ -117,7 +117,9 @@
    "fieldname": "tax_account",
    "fieldtype": "Link",
    "label": "Tax Account",
-   "options": "Account"
+   "options": "Account",
+   "depends_on": "eval:flt(doc.tax_rate)",
+   "mandatory_depends_on": "eval:flt(doc.tax_rate)"
   },
   {
    "fieldname": "tax_rate",
@@ -142,7 +144,8 @@
    "fieldname": "tax_amount",
    "fieldtype": "Currency",
    "label": "Tax Amount",
-   "read_only": 1
+   "read_only": 1,
+   "depends_on": "eval:flt(doc.tax_rate)"
   },
   {
    "fieldname": "total_amount",
@@ -174,12 +177,6 @@
   {
    "fieldname": "column_break_4",
    "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "customer",
-   "fieldtype": "Link",
-   "label": "Customer Name",
-   "options": "Customer"
   },
   {
    "fieldname": "notes",

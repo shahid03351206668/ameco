@@ -1,7 +1,7 @@
 frappe.ui.form.on("Expense Entry", {
     setup(frm) {
         frm.set_query("expense_account", () => ({
-            filters: { company: frm.doc.company, is_group: 0, root_type: "Expense" },
+            filters: { company: frm.doc.company, is_group: 0, account_type: "Expense" },
         }));
         frm.set_query("paid_through", () => ({
             filters: { company: frm.doc.company, is_group: 0, account_type: ["in", ["Bank", "Cash"]] },
@@ -35,7 +35,12 @@ frappe.ui.form.on("Expense Entry", {
     },
 
     amount: calculate,
-    tax_rate: calculate,
+    tax_rate(frm) {
+        if (!flt(frm.doc.tax_rate)) {
+            frm.set_value({ tax_account: "", tax_inclusive: "" });
+        }
+        calculate(frm);
+    },
     tax_inclusive: calculate,
 });
 
@@ -43,7 +48,11 @@ function calculate(frm) {
     const amount = flt(frm.doc.amount);
     const rate = flt(frm.doc.tax_rate);
     let net, tax, total;
-    if (frm.doc.tax_inclusive === "Tax Inclusive") {
+    if (!rate) {
+        net = amount;
+        tax = 0;
+        total = amount;
+    } else if (frm.doc.tax_inclusive === "Tax Inclusive") {
         total = amount;
         net = amount / (1 + rate / 100);
         tax = amount - net;
