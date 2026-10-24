@@ -1,7 +1,7 @@
 frappe.ui.form.on("Expense Entry", {
     setup(frm) {
         frm.set_query("expense_account", () => ({
-            filters: { company: frm.doc.company, is_group: 0, account_type: "Expense" },
+            filters: { company: frm.doc.company, is_group: 0, root_type: "Expense" },
         }));
         frm.set_query("paid_through", () => ({
             filters: { company: frm.doc.company, is_group: 0, account_type: ["in", ["Bank", "Cash"]] },
@@ -35,11 +35,15 @@ frappe.ui.form.on("Expense Entry", {
     },
 
     amount: calculate,
-    tax_rate(frm) {
-        if (!flt(frm.doc.tax_rate)) {
-            frm.set_value({ tax_account: "", tax_inclusive: "" });
+    tax_account(frm) {
+        if (!frm.doc.tax_account) {
+            frm.set_value({ tax_rate: 0, tax_inclusive: "" });
+            calculate(frm);
+            return;
         }
-        calculate(frm);
+        frappe.db.get_value("Account", frm.doc.tax_account, "tax_rate").then(({ message }) => {
+            frm.set_value("tax_rate", flt(message && message.tax_rate)).then(() => calculate(frm));
+        });
     },
     tax_inclusive: calculate,
 });

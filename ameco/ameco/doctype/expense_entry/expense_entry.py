@@ -4,6 +4,7 @@ from frappe.model.document import Document
 from frappe.utils import flt
 
 from erpnext.accounts.general_ledger import make_gl_entries, make_reverse_gl_entries
+from erpnext.accounts.party import get_party_account
 from erpnext.accounts.utils import get_fiscal_year
 
 
@@ -13,10 +14,6 @@ class ExpenseEntry(Document):
         self.validate_amount()
         self.validate_accounts()
         self.calculate_totals()
-
-    def before_submit(self):
-        if not self.vendor:
-            frappe.throw(_("Vendor is required to submit an Expense Entry"), title=_("Missing Vendor"))
 
     def on_submit(self):
         self.make_gl_entries()
@@ -40,14 +37,12 @@ class ExpenseEntry(Document):
     def validate_amount(self):
         if flt(self.amount) <= 0:
             frappe.throw(_("Amount must be greater than zero"))
-        if flt(self.tax_rate):
-            if not self.tax_account:
-                frappe.throw(_("Tax Account is required when Tax Rate is set"))
+        if self.tax_account:
+            self.tax_rate = flt(frappe.db.get_value("Account", self.tax_account, "tax_rate"))
             if not self.tax_inclusive:
-                frappe.throw(_("Amount Is (Tax Inclusive / Tax Exclusive) is required when Tax Rate is set"))
+                frappe.throw(_("Amount Is (Tax Inclusive / Tax Exclusive) is required when Tax Account is set"))
         else:
             self.tax_rate = 0
-            self.tax_account = None
             self.tax_inclusive = ""
 
     def validate_accounts(self):
@@ -79,15 +74,19 @@ class ExpenseEntry(Document):
     def get_gl_entries(self):
         entries = []
 
-        def add(account, debit=0, credit=0, against=None):
+        def add(account, debit=0, credit=0, against=None, party=None):
             entries.append(
                 frappe._dict(
                     account=account,
+                    party_type="Supplier" if party else None,
+                    party=party,
                     debit=debit,
                     credit=credit,
                     debit_in_account_currency=debit,
                     credit_in_account_currency=credit,
                     against=against,
+                    against_voucher_type=self.doctype if party else None,
+                    against_voucher=self.name if party else None,
                     voucher_type=self.doctype,
                     voucher_no=self.name,
                     posting_date=self.posting_date,
@@ -100,12 +99,26 @@ class ExpenseEntry(Document):
 
         total = flt(self.total_amount)
 
-        add(self.expense_account, debit=flt(self.net_amount), against=self.paid_through)
-        if flt(self.tax_amount):
-            add(self.tax_account, debit=flt(self.tax_amount), against=self.paid_through)
-        add(self.paid_through, credit=total, against=self.expense_account)
+        if self.vendor:
+            payable = get_party_account("Supplier", self.vendor, self.company)
+
+            # 1. book the expense against the supplier
+            add(payable, credit=total, against=self.expense_account, party=self.vendor)
+            add(self.expense_account, debit=flt(self.net_amount), against=self.vendor)
+            if flt(self.tax_amount):
+                add(self.tax_account, debit=flt(self.tax_amount), against=self.vendor)
+
+            # 2. settle the supplier from the paid-through account
+            add(payable, debit=total, against=self.paid_through, party=self.vendor)
+            add(self.paid_through, credit=total, against=self.vendor)
+        else:
+            add(self.expense_account, debit=flt(self.net_amount), against=self.paid_through)
+            if flt(self.tax_amount):
+                add(self.tax_account, debit=flt(self.tax_amount), against=self.paid_through)
+            add(self.paid_through, credit=total, against=self.expense_account)
 
         return entries
 
     def make_gl_entries(self):
-        make_gl_entries(self.get_gl_entries())
+        # merge_entries=False keeps the supplier debit and credit as separate rows
+        make_gl_entries(self.get_gl_entries(), merge_entries=False)

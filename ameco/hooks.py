@@ -44,6 +44,7 @@ app_license = "mit"
 
 # include js in doctype views
 # doctype_js = {"doctype" : "public/js/doctype.js"}
+doctype_js = {"Item": "public/js/item.js"}
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
@@ -138,13 +139,28 @@ app_license = "mit"
 # Hook on document methods and events
 
 doc_events = {
-    "*": {"validate": "ameco.main.set_accounting_dimensions"}
+    "*": {"validate": "ameco.main.set_accounting_dimensions"},
+    "Item": {"before_insert": "ameco.main.set_item_code_from_group"},
+    "Sales Invoice": {
+        "validate": [
+            "ameco.main.validate_update_stock",
+            "ameco.main.set_arabic_in_words",
+        ]
+    },
+    "Purchase Invoice": {"validate": "ameco.main.validate_update_stock"},
     # 	"*": {
     # 		"on_update": "method",
     # 		"on_cancel": "method",
     # 		"on_trash": "method"
     # 	}
 }
+
+fixtures = [
+    {
+        "dt": "Custom Field",
+        "filters": [["name", "in", ["Item Group-custom_item_code_prefix"]]],
+    }
+]
 
 # Scheduled Tasks
 # ---------------

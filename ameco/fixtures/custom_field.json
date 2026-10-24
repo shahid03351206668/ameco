@@ -1,0 +1,14 @@
+[
+ {
+  "doctype": "Custom Field",
+  "name": "Item Group-custom_item_code_prefix",
+  "dt": "Item Group",
+  "fieldname": "custom_item_code_prefix",
+  "fieldtype": "Data",
+  "label": "Item Code Prefix",
+  "insert_after": "parent_item_group",
+  "unique": 1,
+  "description": "Item codes for this group are generated as PREFIX-00001, e.g. AMS-ELC-00001",
+  "module": "Ameco"
+ }
+]
